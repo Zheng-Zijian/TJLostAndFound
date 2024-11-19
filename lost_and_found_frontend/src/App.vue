@@ -22,7 +22,7 @@ export default {
     return {
       items: [],
       category: '',
-      search: ''
+      search: '',
     };
   },
   methods: {

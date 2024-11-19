@@ -17,6 +17,7 @@ def get_items():
     category = request.args.get('category', '')  # 获取类别参数
     search = request.args.get('search', '')  # 获取搜索关键字
     claimed = request.args.get('claimed', '')  # 获取认领状态
+    sort_order = request.args.get('sort', 'asc') # 获取排序方式，默认升序
     query = models.LostItem.query
 
     # 如果类别非空，则按类别筛选
@@ -33,6 +34,14 @@ def get_items():
         query = query.filter(models.LostItem.claimed == True)
     elif claimed == 'unclaimed':
         query = query.filter(models.LostItem.claimed == False)
+
+    #    根据排序参数调整排序方式
+    if sort_order == 'asc':
+        query = query.order_by(models.LostItem.found_date.asc())
+    elif sort_order == 'desc':
+        query = query.order_by(models.LostItem.found_date.desc())
+    else:
+        raise ValueError(f"Invalid sort_order: {sort_order}")
     items = query.all()
 
     return jsonify([item.to_dict() for item in items])
