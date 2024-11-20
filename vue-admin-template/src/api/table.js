@@ -1,9 +1,21 @@
 import request from '@/utils/request'
 
-export function getList(params) {
+
+
+export function getItems(params) {
   return request({
-    url: '/vue-admin-template/table/list',
+    url: '/api/items',
     method: 'get',
     params
   })
 }
+
+
+
+export function claimItem(itemId, data) {
+    return request({
+    url: `/items/claim/${itemId}`,
+    method: 'post',
+    data
+  })
+  }

@@ -1,8 +1,8 @@
 DATABASE_CONFIG = {
     'user': 'root',
-    'password': 'Jian040621',
-    'host': 'localhost',
-    'database': 'lost_found_db'
+    'password': 'Jikedao_11',
+    'host': '47.100.24.135',
+    'database': 'jikedaodb'
 }
 
 
