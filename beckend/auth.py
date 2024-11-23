@@ -21,7 +21,6 @@ def login():
     # 从数据库中获取用户（在实际应用中，你会查询数据库）
     user = models.User.query.filter_by(username=username).first()
     if user and user.check_password(password):
-        identity_info = {'username': username}
         access_token = create_access_token(identity= json.dumps({'username':username,'role':user.role}))
         return jsonify({'token': access_token}), 200
     else:
