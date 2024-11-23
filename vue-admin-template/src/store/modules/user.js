@@ -57,10 +57,10 @@ const actions = {
           return reject('Verification failed, please Login again.')
         }
 
-        const { name, avatar } = data
+        const { name, avatar,roles } = data
         commit('SET_NAME', name)
         commit('SET_AVATAR', avatar)
-        commit('SET_ROLES', ['admin'])
+        commit('SET_ROLES', roles)
         resolve(data)
       }).catch(error => {
         reject(error)
@@ -74,6 +74,7 @@ const actions = {
       logout(state.token).then(() => {
         removeToken() // must remove  token  first
         resetRouter()
+        commit('SET_ROLES', [])
         commit('RESET_STATE')
         resolve()
       }).catch(error => {
@@ -86,6 +87,7 @@ const actions = {
   resetToken({ commit }) {
     return new Promise(resolve => {
       removeToken() // must remove  token  first
+      commit('SET_ROLES', [])
       commit('RESET_STATE')
       resolve()
     })

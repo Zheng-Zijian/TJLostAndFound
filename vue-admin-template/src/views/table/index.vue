@@ -61,7 +61,7 @@
           <el-tag :type="scope.row.claimed | statusFilter">{{ scope.row.claimed ? '已认领' : '未认领' }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="类别" align="center">
+      <el-table-column label="认领用户" align="center">
         <template slot-scope="scope">
           <span>{{ scope.row.claimed_user || '--' }}</span>
         </template>
