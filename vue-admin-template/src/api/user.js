@@ -29,3 +29,11 @@ export function register(data) {
     data
   })
 }
+
+export function sendVerifyCode(data) {
+  return request({
+    url: '/user/verify',
+    method: 'post',
+    data
+  })
+}

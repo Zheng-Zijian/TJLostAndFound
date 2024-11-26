@@ -70,3 +70,11 @@ class InfoPost(db.Model):
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
             'is_active': self.is_active
         }
+
+class VerifyCode(db.Model):
+    __tablename__ = 'verification_codes'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    verification_code = db.Column(db.String(255), nullable=False)
+    expiration_time = db.Column(db.TIMESTAMP, nullable=False)

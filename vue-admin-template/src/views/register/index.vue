@@ -18,9 +18,18 @@
                 <span class="svg-container">
                     <svg-icon icon-class="email" />
                 </span>
-                <el-input ref="username" v-model="registerForm.email" placeholder="邮箱" name="username" type="text"
+                <el-input ref="email" v-model="registerForm.email" placeholder="邮箱" name="email" type="text"
                     tabindex="1" auto-complete="on" />
             </el-form-item>
+            <el-form-item prop="verifycode" style="width:70%;display: inline-block;">
+                <span class="svg-container">
+                    <svg-icon icon-class="verifycode" />
+                </span>
+                <el-input ref="verifycode" v-model="registerForm.verifycode" placeholder="验证码" name="verifycode"
+                    type="text" tabindex="1" auto-complete="on" />
+            </el-form-item>
+            <el-button :loading="loading2" type="primary" style="width:30%;height: 52px;"
+                @click.native.prevent="handleVerifyCode">发送验证码</el-button>
             <el-form-item prop="password">
                 <span class="svg-container">
                     <svg-icon icon-class="password" />
@@ -60,7 +69,7 @@
 
 <script>
 // import { validUsername } from '@/utils/validate'
-import { register } from '@/api/user';
+import { register, sendVerifyCode } from '@/api/user';
 export default {
     name: 'Login',
     data() {
@@ -78,21 +87,27 @@ export default {
             registerForm: {
                 username: '',
                 email: '',
+                verifycode: '',
                 password: '',
                 checkpassword: ''
             },
 
             loginRules: {
                 username: [
+                    { required: true, message: '用户名不能为空', trigger: 'blur' },
                     { min: 3, max: 50, message: '长度必须为3-50个字符', trigger: 'blur' },
                     { pattern: /^\w+$/, message: '只能包含字母/数字/下划线', trigger: 'blur' },
                 ],
                 email: [
-                    { Required: true, message: '长度至少6个字符', trigger: 'blur' },
-                    { pattern: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/, message: '邮箱格式不合法', trigger: 'blur' },
+                    { required: true, message: '邮箱不能为空', trigger: 'blur' },
+                    { pattern: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/, message: '邮箱格式错误', trigger: 'blur' },
 
                 ],
+                verifycode: [
+                    { required: true, message: '请输入验证码', trigger: 'blur' }
+                ],
                 password: [
+                    { required: true, message: '请输入密码', trigger: 'blur' },
                     { min: 6, message: '长度至少6个字符', trigger: 'blur' }
                 ],
                 checkpassword: [
@@ -100,6 +115,7 @@ export default {
                 ]
             },
             loading: false,
+            loading2: false,
             passwordType: 'password',
             passwordType2: 'password',
             redirect: undefined
@@ -136,6 +152,24 @@ export default {
             this.$nextTick(() => {
                 this.$refs.password.focus()
             })
+        },
+        handleVerifyCode() {
+            let hasError = false;
+            this.$refs.registerForm.validateField(['username', 'email'], err => {
+                if (err) {
+                    hasError = true;
+                    return;
+                }
+            });
+            if (!hasError) {
+                this.loading2 = true;
+                sendVerifyCode(this.registerForm).then(() => {
+                    this.$message('验证码发送成功')
+                    this.loading2 = false
+                }).catch(() => {
+                    this.loading2 = false
+                })
+            }
         },
         handleRegister() {
             this.$refs.registerForm.validate(valid => {
@@ -218,6 +252,7 @@ $light_gray: #eee;
 
     .login-form {
         position: relative;
+        top: -40px;
         width: 520px;
         max-width: 100%;
         padding: 160px 35px 0;
