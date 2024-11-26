@@ -1,4 +1,4 @@
-import router ,{ constantRoutes }from './router'
+import router, { constantRoutes } from './router'
 import store from './store'
 import { Message } from 'element-ui'
 import NProgress from 'nprogress' // progress bar
@@ -8,7 +8,7 @@ import getPageTitle from '@/utils/get-page-title'
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
-const whiteList = ['/login','/register'] // no redirect whitelist
+const whiteList = ['/login', '/register'] // no redirect whitelist
 
 router.beforeEach(async(to, from, next) => {
   // start progress bar
@@ -34,7 +34,7 @@ router.beforeEach(async(to, from, next) => {
           // get user info
           const { roles } = await store.dispatch('user/getInfo')
           const accessRoutes = await store.dispatch('permission/generateRoutes', roles)
-          console.log(roles);
+          console.log(roles)
           // dynamically add accessible routes
           router.options.routes = constantRoutes.concat(accessRoutes)
           router.addRoutes(accessRoutes)

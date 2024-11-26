@@ -1,4 +1,4 @@
-import permission from "./permission"
+import permission from './permission'
 
 const getters = {
   sidebar: state => state.app.sidebar,
@@ -7,6 +7,6 @@ const getters = {
   avatar: state => state.user.avatar,
   name: state => state.user.name,
   roles: state => state.user.roles,
-  permission_routes: state=>state.permission.routes
+  permission_routes: state => state.permission.routes
 }
 export default getters

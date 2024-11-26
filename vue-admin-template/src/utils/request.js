@@ -18,7 +18,7 @@ service.interceptors.request.use(
       // let each request carry token
       // ['X-Token'] is a custom headers key
       // please modify it according to the actual situation
-     config.headers['Authorization'] = `Bearer ${getToken()}`
+      config.headers['Authorization'] = `Bearer ${getToken()}`
     }
     return config
   },
@@ -68,26 +68,25 @@ service.interceptors.response.use(
     //   }
     //   return Promise.reject(new Error(res.message || 'Error'))
     // } else {
-      return response
+    return response
 
     // }
   },
   error => {
     console.log('err' + error) // for debug
     if (error.response && error.response.data && error.response.data.msg) {
-    Message({
-      message: error.response.data.msg,
-      type: 'error',
-      duration: 5 * 1000
-    })
-  }
-  else{
-    Message({
-      message: error,
-      type: 'error',
-      duration: 5 * 1000
-    })
-  }
+      Message({
+        message: error.response.data.msg,
+        type: 'error',
+        duration: 5 * 1000
+      })
+    } else {
+      Message({
+        message: error,
+        type: 'error',
+        duration: 5 * 1000
+      })
+    }
     return Promise.reject(error)
   }
 )

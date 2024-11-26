@@ -1,7 +1,5 @@
 import request from '@/utils/request'
 
-
-
 export function getItems(params) {
   return request({
     url: '/api/items',
@@ -10,12 +8,10 @@ export function getItems(params) {
   })
 }
 
-
-
 export function claimItem(itemId, data) {
-    return request({
+  return request({
     url: `/items/claim/${itemId}`,
     method: 'post',
     data
   })
-  }
+}
