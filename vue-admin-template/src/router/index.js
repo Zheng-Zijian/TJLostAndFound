@@ -95,6 +95,19 @@ export const constantRoutes = [
   },
 
   {
+    path: '/personal',
+    component: Layout,
+    children: [
+      {
+        path: 'personal',
+        name: '失物表',
+        component: () => import('@/views/personal/index'),
+        meta: { title: 'Personal', icon: 'table' }
+      }
+    ]
+  },
+
+  {
     path: '/nested',
     component: Layout,
     redirect: '/nested/menu1',

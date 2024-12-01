@@ -70,5 +70,17 @@ def register():
         return {'msg': '注册失败'}, 400
     return {'msg':'注册成功'},200
 
-
-
+# 读取当前用户联系方式
+@auth_bp.route('/user/contact', methods=['GET'])
+@jwt_required()
+def getContactInfo():
+    user_name=request.args.get('user_name',None)
+    if not user_name:
+        return jsonify({"msg": "缺少参数"}), 400
+    try:
+        user = models.User.query.filter_by(username=user_name).first()
+        if not user:
+            return jsonify({"msg": "用户不存在"}), 400
+        return {'name':user.username, 'email':user.email}, 200
+    except Exception as e:
+        return jsonify({"msg":'无法获取用户信息'}), 401
