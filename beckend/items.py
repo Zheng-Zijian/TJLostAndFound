@@ -4,6 +4,7 @@ import models
 from sqlalchemy import or_
 from flask_jwt_extended import jwt_required
 from flask_jwt_extended import get_jwt_identity
+import datetime
 import json
 
 items_bp = Blueprint('items', __name__)
@@ -28,10 +29,6 @@ def get_items():
             models.LostItem.item_name.like(f"%{search}%"),
             models.LostItem.location.like(f"%{search}%")
         ))
-    if claimed == 'claimed':
-        query = query.filter(models.LostItem.claimed == True)
-    elif claimed == 'unclaimed':
-        query = query.filter(models.LostItem.claimed == False)
 
     #  如果上传用户非空，则按上传用户筛选
     if upload_user:
@@ -64,7 +61,8 @@ def add_item():
         category=data['category'],
         location=data['location'],
         description=data['description'],
-        contact_info=data['contact_info']
+        contact_info=data['contact_info'],
+        found_date=datetime.datetime.strptime(data['found_date'],'%Y-%m-%d')
     )
     db.session.add(new_item)
     db.session.commit()
@@ -72,15 +70,22 @@ def add_item():
 
 # 认领失物
 @jwt_required()
-@items_bp.route('/api/items/claim/<int:item_id>', methods=['POST'])
-def claim_item(item_id):
-    item = models.LostItem.query.get(item_id)
+@items_bp.route('/api/items/claim', methods=['POST'])
+def claim_item():
+    data = request.get_json()
+    id = data.get('item_id', None)
+    # return {'msg':id}
+    if not id:
+        return jsonify({'status': 'not found'}), 404
+    item = models.LostItem.query.get(id)
     if item:
         item.claimed = True
         item.claimed_user = request.json.get('claimed_user')
         db.session.commit()
         return jsonify({'status': 'claimed'})
     return jsonify({'status': 'not found'}), 404
+
+
 
 #每个用户上传的失物
 @jwt_required()
@@ -119,7 +124,6 @@ def delete_item(item_id):
         user = identity['username']  # 获取用户名
     except (json.JSONDecodeError, KeyError) as e:
         return jsonify({'msg': 'Invalid JWT token format'}), 400
-
     # 查询数据库中的记录
     item = models.LostItem.query.get(item_id)
 
@@ -130,11 +134,9 @@ def delete_item(item_id):
     # 验证权限：确保当前用户是记录的上传者
     if item.upload_user != user:
         return jsonify({'message': 'Permission denied'}), 403
-
     # 删除记录
     db.session.delete(item)
     db.session.commit()
-
     return jsonify({'message': f'Item {item_id} deleted successfully'})
 
 # 每个用户上传的失物 - 新增

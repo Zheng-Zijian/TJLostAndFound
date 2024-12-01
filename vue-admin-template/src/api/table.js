@@ -10,8 +10,26 @@ export function getItems(params) {
 
 export function claimItem(itemId, data) {
   return request({
-    url: `/items/claim/${itemId}`,
+    url: 'api/items/claim',
+    method: 'post',
+    data,itemId
+  })
+}
+
+
+
+export function addItem(data){
+  return request({
+    url: '/api/items',
     method: 'post',
     data
+  })
+}
+
+export function deleteItem(itemId){
+  return request({
+    url: `/api/items/${itemId}`,
+    method: 'delete',
+    params: {itemId}
   })
 }

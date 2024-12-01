@@ -37,3 +37,10 @@ export function sendVerifyCode(data) {
     data
   })
 }
+export function getUserContactInfo(token, user_name) {
+  return request({
+    url: '/user/contact',
+    method: 'get',
+    params: {user_name}
+  })
+}
