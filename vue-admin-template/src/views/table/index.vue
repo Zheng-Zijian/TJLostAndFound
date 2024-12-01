@@ -30,7 +30,8 @@
       </el-table-column>
       <el-table-column label="物品名称" align="center">
         <template slot-scope="scope">
-          {{ scope.row.item_name }}
+          <el-button type="text" @click="showDescription(scope.row.description)"> <span style="
+            text-decoration: underline;">{{ scope.row.item_name }}</span></el-button>
         </template>
       </el-table-column>
       <el-table-column label="类别" align="center">
@@ -74,6 +75,15 @@
       <p><strong>联系方式:</strong> {{ modalContact }}</p>
       <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="closeModal">关 闭</el-button>
+      </span>
+    </el-dialog>
+
+
+    <!-- 物品描述信息对话框 -->
+    <el-dialog :visible.sync="tooltipVisible" title="物品描述信息">
+      <p><strong>物品描述:</strong> {{  tooltipContent  }}</p>
+      <span slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="hideDescription">关 闭</el-button>
       </span>
     </el-dialog>
   </div>
