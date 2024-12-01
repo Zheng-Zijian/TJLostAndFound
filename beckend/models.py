@@ -48,30 +48,30 @@ class User(db.Model):
         return check_password_hash(self.password_hash, password)
 
 
-class ClaimRequest(db.Model):
-    __tablename__ = 'claim_requests'
+# class ClaimRequest(db.Model):
+#     __tablename__ = 'claim_requests'
 
-    id = db.Column(db.Integer, primary_key=True)
-    lost_item_id = db.Column(db.Integer, db.ForeignKey('lost_items.id'), nullable=False)
-    claimant_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    uploader_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # 添加上传者字段
-    status = db.Column(db.String(20), default='pending', nullable=False)  # 'pending', 'approved', 'rejected'
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+#     id = db.Column(db.Integer, primary_key=True)
+#     lost_item_id = db.Column(db.Integer, db.ForeignKey('lost_items.id'), nullable=False)
+#     claimant_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+#     uploader_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # 添加上传者字段
+#     status = db.Column(db.String(20), default='pending', nullable=False)  # 'pending', 'approved', 'rejected'
+#     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+#     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    lost_item = db.relationship('LostItem', backref=db.backref('claim_requests', lazy=True))
-    claimant = db.relationship('User', backref=db.backref('claim_requests', lazy=True))
-    uploader = db.relationship('User', foreign_keys=[uploader_user_id], backref=db.backref('uploaded_claim_requests', lazy=True))  # 用于上传者关系
+#     lost_item = db.relationship('LostItem', backref=db.backref('claim_requests', lazy=True))
+#     claimant = db.relationship('User', backref=db.backref('claim_requests', lazy=True))
+#     uploader = db.relationship('User', foreign_keys=[uploader_user_id], backref=db.backref('uploaded_claim_requests', lazy=True))  # 用于上传者关系
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'lost_item_id': self.lost_item_id,
-            'claimant_user_id': self.claimant_user_id,
-            'uploader_user_id': self.uploader_user_id,  # 添加上传者ID到字典中
-            'status': self.status,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'claimant_username': self.claimant.username,
-            'uploader_username': self.uploader.username  # 获取上传者的用户名
-        }
+#     def to_dict(self):
+#         return {
+#             'id': self.id,
+#             'lost_item_id': self.lost_item_id,
+#             'claimant_user_id': self.claimant_user_id,
+#             'uploader_user_id': self.uploader_user_id,  # 添加上传者ID到字典中
+#             'status': self.status,
+#             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+#             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+#             'claimant_username': self.claimant.username,
+#             'uploader_username': self.uploader.username  # 获取上传者的用户名
+#         }
