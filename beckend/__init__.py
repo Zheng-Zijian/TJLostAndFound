@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_file
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from db import db
@@ -25,7 +25,10 @@ app.config['MAIL_DEFAULT_SENDER'] = 'jikedao@yeah.net'  # 默认发件人地址
 app.register_blueprint(auth_bp)
 app.register_blueprint(items_bp)
 app.register_blueprint(info_bp)
-
+# @app.route('/')
+# def get_image():
+#     image_path ='C:/Users/31535/Pictures/Screenshots/屏幕截图 2024-11-27 222424.png'  # 假设把图片放在了名为'static'的目录下，这里要根据实际放置情况调整
+#     return send_file(image_path)
 
 if __name__ == '__main__':
     with app.app_context():

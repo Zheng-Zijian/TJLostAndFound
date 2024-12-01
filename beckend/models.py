@@ -42,7 +42,7 @@ class User(db.Model):
         self.username = username
         self.email = email
         self.role = role
-        self.password_hash = generate_password_hash(password)
+        self.password_hash = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -74,7 +74,7 @@ class InfoPost(db.Model):
 class VerifyCode(db.Model):
     __tablename__ = 'verification_codes'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
+    username = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(100), nullable=False)
     verification_code = db.Column(db.String(255), nullable=False)
     expiration_time = db.Column(db.TIMESTAMP, nullable=False)

@@ -3,12 +3,12 @@ import random
 import re
 import string
 
-from Demos.win32ts_logoff_disconnected import session
+
 from flask import request, jsonify, Blueprint
 from flask_mail import Mail, Message, current_app
 import datetime
 
-from fontTools.misc.cython import returns
+
 
 from db import db
 import models
@@ -61,13 +61,13 @@ def verify():
         return jsonify({"msg": "用户名格式错误"}), 400
     if re.match('^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', email) is None:
         return jsonify({"msg": "邮箱格式错误"}), 400
+    models.VerifyCode.query.filter(models.VerifyCode.expiration_time < datetime.datetime.now()).delete()
     user = models.User.query.filter_by(username=username).first()
     if user:
         return {'msg':'用户名已存在'},400
     user = models.User.query.filter_by(email=email).first()
     if user:
         return {'msg':'邮箱已注册'},400
-    models.VerifyCode.query.filter(models.VerifyCode.expiration_time < datetime.datetime.now()).delete()
     db.session.commit()
     dbverifycode = models.VerifyCode.query.filter(models.VerifyCode.username==username and models.VerifyCode.email==email).first()
 
@@ -75,8 +75,8 @@ def verify():
         if dbverifycode.email == email and dbverifycode.username == username:
             delta = dbverifycode.expiration_time - datetime.datetime.now()
             return {'msg':f'验证码已发送，如需重新发送，请等待{delta.seconds}秒再试'},400
-        else:
-            return {'msg':'该用户名或邮箱正在被其它用户注册'},400
+        # else:
+        #     return {'msg':'该用户名或邮箱正在被其它用户注册'},400
     all_characters = string.ascii_letters + string.digits
     verification_code = ''.join(random.choice(all_characters) for _ in range(8))
     new_verification_code = models.VerifyCode(
@@ -120,6 +120,9 @@ def register():
         return {'msg':'验证码已过期，请重新发送'},400
     if verifycode != dbverifycode.verification_code:
         return {'msg':'验证码错误'},400
+    user = models.User.query.filter(models.User.username == username or models.User.email==email).first()
+    if user:
+        return {'msg':'用户已存在'},400
     try:
         new_user = models.User(username=username, email=email, password=password, role='editor')
         db.session.add(new_user)
