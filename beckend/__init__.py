@@ -5,11 +5,11 @@ from db import db
 from auth import auth_bp
 from items import items_bp
 from info import info_bp
-
+from images import images_bp
 
 app = Flask(__name__)
 CORS(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Jikedao_11@47.100.24.135/jikedaodb'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Jikedao_11@47.100.24.135/newdb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'  # 替换为你的密钥
@@ -25,10 +25,8 @@ app.config['MAIL_DEFAULT_SENDER'] = 'jikedao@yeah.net'  # 默认发件人地址
 app.register_blueprint(auth_bp)
 app.register_blueprint(items_bp)
 app.register_blueprint(info_bp)
-# @app.route('/')
-# def get_image():
-#     image_path ='C:/Users/31535/Pictures/Screenshots/屏幕截图 2024-11-27 222424.png'  # 假设把图片放在了名为'static'的目录下，这里要根据实际放置情况调整
-#     return send_file(image_path)
+app.register_blueprint(images_bp)
+
 
 if __name__ == '__main__':
     with app.app_context():

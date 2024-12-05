@@ -13,7 +13,7 @@ class LostItem(db.Model):
     contact_info = db.Column(db.String(100), nullable=False)
     claimed = db.Column(db.Boolean, default=False)
     claimed_user = db.Column(db.String(50), nullable=True)
-
+    image_path = db.Column(db.String(100), nullable=True)
     def to_dict(self):
         return {
             'id': self.id,

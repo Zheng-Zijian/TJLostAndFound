@@ -9,8 +9,12 @@
         <el-select v-model="category" placeholder="请选择类别" @change="fetchItems">
           <el-option value="" label="所有类别" />
           <el-option value="雨伞" label="雨伞" />
+          <el-option value="水杯" label="水杯" />
+          <el-option value="包" label="包" />
           <el-option value="眼镜" label="眼镜" />
-          <el-option value="3C电子" label="3C电子" />
+          <el-option value="手机" label="手机" />
+          <el-option value="电脑" label="电脑" />
+          <el-option value="其它" label="其它" />
         </el-select>
       </el-form-item>
       <el-form-item label="状态:">
@@ -29,9 +33,10 @@
           #{{ scope.row.id }}
         </template>
       </el-table-column>
-      <el-table-column label="物品名称" align="center">
+      <el-table-column label="物品" align="center">
         <template slot-scope="scope">
-          {{ scope.row.item_name }}
+          <el-button type="text" @click="showDescription(scope.row.description, scope.row.id)"> <span style="
+            text-decoration: underline;">{{ scope.row.item_name }}</span></el-button>
         </template>
       </el-table-column>
       <el-table-column label="类别" align="center">
@@ -60,14 +65,6 @@
           <span>{{ scope.row.claimed_user || '--' }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="详情" align="center">
-        <template slot-scope="scope">
-          <el-popover placement="top" title="物品描述" width="200">
-            <p>{{ scope.row.description }}</p>
-            <el-button slot="reference" type="text">详情</el-button>
-          </el-popover>
-        </template>
-      </el-table-column>
       <el-table-column label="操作" align="center" width="210">
         <template slot-scope="scope">
           <el-button type="primary" size="small" style="margin-right: 10px"
@@ -91,8 +88,12 @@
         <strong style="margin-right: 10px; white-space: nowrap;">失物类别:</strong>
         <el-select v-model="upload_item_category" placeholder="请选择失物类别..." style="flex: 1;">
           <el-option value="雨伞" label="雨伞" />
+          <el-option value="水杯" label="水杯" />
+          <el-option value="包" label="包" />
           <el-option value="眼镜" label="眼镜" />
-          <el-option value="3C电子" label="3C电子" />
+          <el-option value="手机" label="手机" />
+          <el-option value="电脑" label="电脑" />
+          <el-option value="其它" label="其它" />
         </el-select>
       </p>
       <p style="display: flex; align-items: center; margin-bottom: 15px;">
@@ -108,10 +109,21 @@
         <strong style="margin-right: 10px; white-space: nowrap;">描述信息:</strong>
         <el-input v-model="upload_item_description" placeholder="请输入额外描述信息..." style="flex: 1;" />
       </p>
+
+      <p style="display: flex; align-items: center; margin-bottom: 15px;">
+        <strong style="margin-right: 10px; white-space: nowrap;">上传图片:</strong>
+        <el-upload :action="image_base_api" list-type="picture-card" :auto-upload="false" :limit="1"
+          :class="{ 'hide': disable_upload }" :file-list="filelist" accept=".png, .jpg .jpeg"
+          :on-change="handleImageChange" :on-remove="handleImageRemove">
+          <i class="el-icon-plus"></i>
+          <div slot="tip" class="el-upload__tip">只能上传jpg/png/jpeg文件</div>
+        </el-upload>
+      </p>
       <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="closeAddModal(true)">确 认</el-button>
         <el-button @click="closeAddModal(false)">取 消</el-button>
       </span>
+
     </el-dialog>
 
     <el-dialog :visible.sync="confirm_modalVisible" title="确认认领状态" @close="closeConfirmModal(false)">
@@ -138,18 +150,28 @@
       </span>
     </el-dialog>
 
+    <!-- 物品描述信息对话框 -->
+    <el-dialog :visible.sync="tooltipVisible" title="物品描述信息">
+      <p><strong>物品描述:</strong> {{ tooltipContent }}</p>
+      <img :src="image_url" style="width: 100%;">
+      <span slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="hideDescription">关 闭</el-button>
+      </span>
+    </el-dialog>
   </div>
+</template>
+</div>
 </template>
 
 <script>
 import { getItems } from '@/api/table'
 import { getInfo } from '@/api/user'
-import { getUserContactInfo } from '@/api/user'
 import { addItem } from '@/api/table'
 import { deleteItem } from '@/api/table'
 import { claimItem } from '@/api/request'
 import _ from 'lodash'
 import { Message } from 'element-ui'
+import { uploadImages } from '@/api/images'
 export default {
   filters: {
     statusFilter(status) {
@@ -183,6 +205,7 @@ export default {
       upload_item_time: '',
       upload_item_description: '',
       upload_user_contact_info: '',
+      upload_image: null,
       claim_item_id: '',
       claim_item_name: '',
       claim_item_category: '',
@@ -196,7 +219,11 @@ export default {
       delete_item_claimed_user: '',
       delete_item_description: '',
       sortOrder: 'asc', // 排序方式，默认为升序
-      userInfo: null
+      userInfo: null,
+      image_base_api: process.env.VUE_APP_BASE_API + '/images/upload',
+      image_headers: {},
+      disable_upload: false,
+      image_url: ''
     }
   },
   mounted() {
@@ -240,9 +267,10 @@ export default {
       this.fetchItems()
       this.search = ''
     },
-    showDescription(description) {
-      this.tooltipVisible = true
-      this.tooltipContent = description || '无描述'
+    showDescription(description, id) {
+      this.tooltipVisible = true;
+      this.image_url = process.env.VUE_APP_BASE_API + '/images/get/' + id;
+      this.tooltipContent = description || '无描述';
     },
     hideDescription() {
       this.tooltipVisible = false
@@ -265,32 +293,31 @@ export default {
     },
     closeAddModal(confirmed) {
       this.add_modalVisible = false
-      if (confirmed) {
-        const token = localStorage.getItem('access_token')
-        getUserContactInfo(token, this.userInfo.name)
-          .then(reponse => {
-            this.upload_user_Info = reponse.data
-            this.upload_user_contact_info = this.upload_user_Info.contact_info.email
-          })
-          .catch(error => {
-            console.error('获取用户联系方式失败:', error)
-          })
-        console.log(this.upload_user_contact_info)
+      if (confirmed && this.upload_image && this.upload_image) {
+        // console.log(this.upload_user_contact_info)
+
         const data = {
           item_name: this.upload_item_name,
           category: this.upload_item_category,
           location: this.upload_item_location,
           found_date: this.upload_item_time,
           upload_user: this.userInfo.name,
-          description: this.upload_item_description,
-          contact_info: this.upload_user_contact_info
+          description: this.upload_item_description
         }
         addItem(data)
-          .then(() => {
-            this.fetchItems()
-              .catch(error => {
-                console.error('获取失物列表失败:', error)
+          .then((response) => {
+            const formDataObj = new FormData();
+            formDataObj.append('image', this.upload_image);
+            formDataObj.append('id', response.data.item.id);
+            uploadImages(formDataObj).then(response => {
+              Message({
+                type: 'success',
+                message: '上传成功'
               })
+            }).catch(error => {
+              console.error('图片上传失败:', error)
+            })
+            this.fetchItems()
           })
           .catch(error => {
             console.error('上传失物失败:', error)
@@ -315,9 +342,6 @@ export default {
               message: '删除成功'
             })
             this.fetchItems()
-              .catch(error => {
-                console.error('获取失物列表失败:', error)
-              })
           })
           .catch(error => {
             console.error('删除失物失败:', error)
@@ -356,11 +380,21 @@ export default {
           // 你可以在这里显示错误提示
         })
       }
+    },
+    handleImageChange(file, fileList) {
+      this.upload_image = file.raw
+      this.disable_upload = true;
+    },
+    handleImageRemove() {
+      this.upload_image = null
+      this.disable_upload = false
     }
-
   }
 }
 </script>
-<style scoped>
-/* 整体样式 */
+<style>
+.hide .el-upload--picture-card {
+  display: none;
+  /* 隐藏上传按钮 */
+}
 </style>

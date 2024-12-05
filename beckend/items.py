@@ -1,3 +1,5 @@
+import os
+
 from flask import Blueprint, request, jsonify
 from db import db
 import models
@@ -50,23 +52,7 @@ def get_items():
 
     return jsonify([item.to_dict() for item in items])
 
-# 添加失物记录
-@jwt_required()
-@items_bp.route('/api/items', methods=['POST'])
-def add_item():
-    data = request.json
-    new_item = models.LostItem(
-        upload_user=data['upload_user'],
-        item_name=data['item_name'],
-        category=data['category'],
-        location=data['location'],
-        description=data['description'],
-        contact_info=data['contact_info'],
-        found_date=datetime.datetime.strptime(data['found_date'],'%Y-%m-%d')
-    )
-    db.session.add(new_item)
-    db.session.commit()
-    return jsonify({'status': 'success'})
+
 
 # 认领失物
 @jwt_required()
@@ -135,42 +121,49 @@ def delete_item(item_id):
     if item.upload_user != user:
         return jsonify({'message': 'Permission denied'}), 403
     # 删除记录
+
+    #删除图片(新增)
+    if item.image_path and os.path.exists(item.image_path):
+        os.remove(item.image_path)
     db.session.delete(item)
     db.session.commit()
     return jsonify({'message': f'Item {item_id} deleted successfully'})
 
 # 每个用户上传的失物 - 新增
-@items_bp.route('/api/items/<string:username>', methods=['POST'])
+@items_bp.route('/api/items', methods=['POST'])
 @jwt_required()
-def add_user_item(username):
+def add_user_item():
     data = request.json  # 获取前端发送的 JSON 数据
     # 从 JWT Token 获取当前用户信息
     identity = json.loads(get_jwt_identity())
-    current_user = identity['username']  # 获取当前登录用户
+    username = identity['username']  # 获取当前登录用户
 
-    # 确保 Token 中的用户名与路径参数中的用户名一致
-    if current_user != username:
-        return jsonify({'message': 'User mismatch: Token does not match path username'}), 403
+    # # 确保 Token 中的用户名与路径参数中的用户名一致
+    # if current_user != username:
+    #     return jsonify({'message': 'User mismatch: Token does not match path username'}), 403
     # 确保请求中的用户名与路径中的用户名一致
     if data.get('upload_user') != username:
         return jsonify({'message': 'User mismatch'}), 403
 
     # 必需字段
-    required_fields = ['upload_user', 'item_name', 'category', 'location', 'contact_info']
+    required_fields = ['upload_user', 'item_name', 'category', 'location']
 
     # 检查缺少的字段
     missing_fields = [field for field in required_fields if not data.get(field)]
     if missing_fields:
-        return jsonify(dict(message=f'Missing required fields: {", ".join(missing_fields)}')), 400
-
+        return jsonify(dict(msg=f'Missing required fields: {", ".join(missing_fields)}')), 400
+    user = models.User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({'message': '用户名不存在'}), 400
     # 创建新的失物记录
+
     new_item = models.LostItem(
         upload_user=data['upload_user'],
         item_name=data['item_name'],
         category=data['category'],
         location=data['location'],
         description=data.get('description'),  # 可选字段
-        contact_info=data['contact_info']
+        contact_info=user.email
     )
     db.session.add(new_item)  # 添加到数据库会话
     db.session.commit()  # 提交到数据库
@@ -179,4 +172,4 @@ def add_user_item(username):
     return jsonify({
         'msg': 'Item added successfully',
         'item': new_item.to_dict()
-    }), 201
+    }), 200

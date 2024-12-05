@@ -9,8 +9,12 @@
         <el-select v-model="category" placeholder="请选择类别" @change="fetchItems">
           <el-option value="" label="所有类别" />
           <el-option value="雨伞" label="雨伞" />
+          <el-option value="水杯" label="水杯" />
+          <el-option value="包" label="包" />
           <el-option value="眼镜" label="眼镜" />
-          <el-option value="3C电子" label="3C电子" />
+          <el-option value="手机" label="手机" />
+          <el-option value="电脑" label="电脑" />
+          <el-option value="其它" label="其它" />
         </el-select>
       </el-form-item>
       <el-form-item label="状态:">
@@ -28,9 +32,9 @@
           #{{ scope.row.id }}
         </template>
       </el-table-column>
-      <el-table-column label="物品名称" align="center">
+      <el-table-column label="物品" align="center">
         <template slot-scope="scope">
-          <el-button type="text" @click="showDescription(scope.row.description)"> <span style="
+          <el-button type="text" @click="showDescription(scope.row.description, scope.row.id)"> <span style="
             text-decoration: underline;">{{ scope.row.item_name }}</span></el-button>
         </template>
       </el-table-column>
@@ -81,7 +85,8 @@
 
     <!-- 物品描述信息对话框 -->
     <el-dialog :visible.sync="tooltipVisible" title="物品描述信息">
-      <p><strong>物品描述:</strong> {{  tooltipContent  }}</p>
+      <p><strong>物品描述:</strong> {{ tooltipContent }}</p>
+      <img :src="image_url" style="width: 100%;">
       <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="hideDescription">关 闭</el-button>
       </span>
@@ -91,7 +96,7 @@
 
 <script>
 import { getItems } from '@/api/table'
-import _ from 'lodash';
+// import _ from 'lodash';
 export default {
   filters: {
     statusFilter(status) {
@@ -115,7 +120,8 @@ export default {
       modalVisible: false,
       modalUser: '',
       modalContact: '',
-      sortOrder: 'asc' // 排序方式，默认为升序
+      sortOrder: 'asc', // 排序方式，默认为升序
+      image_url: process.env.VUE_APP_BASE_API + '/images/upload'
     };
   },
   methods: {
@@ -143,8 +149,9 @@ export default {
       this.fetchItems();
       this.search = '';
     },
-    showDescription(description) {
+    showDescription(description, id) {
       this.tooltipVisible = true;
+      this.image_url = process.env.VUE_APP_BASE_API + '/images/get/' + id;
       this.tooltipContent = description || '无描述';
     },
     hideDescription() {
