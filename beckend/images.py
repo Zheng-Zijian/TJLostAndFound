@@ -4,7 +4,7 @@ from flask import Blueprint, request, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import os
 
-from google.auth.metrics import token_request_user
+
 from werkzeug.utils import secure_filename
 
 import models
