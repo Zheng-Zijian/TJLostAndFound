@@ -179,31 +179,33 @@ export const constantRoutes = [
   // },
 
   // 404 page must be placed at the end !!!
-  { path: '*', redirect: '/404', hidden: true }
-]
-
-export const asyncRoutes = [
   {
     path: '/info',
     component: Layout,
     meta: { title: '信息管理', icon: 'el-icon-s-order' },
     children: [
       {
-        path: 'manage/:id?', // `:id?` 表示可选参数，用于编辑模式
+        path: 'manage', 
         name: 'InfoManage',
         component: () => import('@/views/info/InfoManage'),
-        meta: { title: '发布信息', roles: ['admin'] } // 仅管理员可访问
+        meta: { title: '发布信息', icon: 'el-icon-s-order' }
       },
       {
         path: 'list',
         name: 'InfoList',
         component: () => import('@/views/info/InfoList'),
-        meta: { title: '信息列表', roles: ['admin', 'user'] } // 所有人可访问
+        meta: { title: '信息列表', icon: 'el-icon-s-order' } // 所有人可访问
       }
     ]
   },
   { path: '*', redirect: '/404', hidden: true }
 ]
+
+export const asyncRoutes = [
+
+  { path: '*', redirect: '/404', hidden: true }
+]
+
 
 const createRouter = () => new Router({
   mode: 'hash', // 改为 hash 模式，避免刷新问题

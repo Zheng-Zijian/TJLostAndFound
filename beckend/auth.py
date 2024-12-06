@@ -3,7 +3,7 @@ import random
 import re
 import string
 
-from Demos.win32ts_logoff_disconnected import session
+
 from flask import request, jsonify, Blueprint
 from flask_mail import Mail, Message, current_app
 import datetime

@@ -1,74 +1,131 @@
 <template>
-    <div>
-      <el-card>
-        <h2>{{ isEditMode ? '编辑信息' : '发布信息' }}</h2>
-        <el-form :model="info" label-width="80px">
-          <el-form-item label="标题">
-            <el-input v-model="info.title" />
-          </el-form-item>
-          <el-form-item label="分类">
-            <el-select v-model="info.category">
-              <el-option label="公告" value="announcement" />
-              <el-option label="活动" value="event" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="内容">
-            <el-input type="textarea" v-model="info.content" />
-          </el-form-item>
-          <el-button type="primary" @click="submitInfo">
-            {{ isEditMode ? '保存修改' : '发布信息' }}
-          </el-button>
-        </el-form>
-      </el-card>
-    </div>
-  </template>
-  
-  <script>
-  export default {
-    data() {
-      return {
-        info: {
-          title: '',
-          category: '',
-          content: ''
-        },
-        isEditMode: false // 是否为编辑模式
-      };
+  <div class="app-container">
+    <h2 class="title" style="text-align: center;">管理我的信息</h2>
+    <el-button type="primary" @click="showCreateDialog">发布新信息</el-button>
+    <el-table :data="infoList" style="width: 100%" v-loading="listLoading">
+      <el-table-column prop="title" label="标题" width="180"></el-table-column>
+      <el-table-column prop="category" label="分类" width="180"></el-table-column>
+      <el-table-column prop="created_at" label="创建时间" width="180"></el-table-column>
+      <el-table-column prop="content" label="内容"></el-table-column>
+      <el-table-column label="操作" width="180">
+        <template slot-scope="scope">
+          <el-button size="mini" @click="showEditDialog(scope.row)">编辑</el-button>
+          <el-button size="mini" type="danger" @click="deleteInfo(scope.row.id)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- 发布/编辑信息的对话框 -->
+    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible">
+      <el-form :model="form">
+        <el-form-item label="标题">
+          <el-input v-model="form.title"></el-input>
+        </el-form-item>
+        <el-form-item label="分类">
+          <el-select v-model="form.category" placeholder="请选择分类">
+            <el-option label="丢失物品" value="丢失物品"></el-option>
+            <el-option label="捡到物品" value="捡到物品"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="内容">
+          <el-input type="textarea" v-model="form.content"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitForm">确定</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import { fetchUserInfoList, createInfo, updateInfo, deleteInfo } from '@/api/info';
+
+export default {
+  data() {
+    return {
+      infoList: [],
+      listLoading: true,
+      dialogVisible: false,
+      dialogTitle: '',
+      form: {
+        id: null,
+        title: '',
+        category: '',
+        content: ''
+      }
+    };
+  },
+  created() {
+    this.getUserInfoList();
+  },
+  methods: {
+    getUserInfoList() {
+      this.listLoading = true;
+      fetchUserInfoList()
+        .then(response => {
+          this.infoList = response.data;
+          this.listLoading = false;
+        })
+        .catch(error => {
+          console.error('获取用户信息列表失败:', error);
+          this.listLoading = false;
+        });
     },
-    created() {
-      const id = this.$route.params.id; // 获取路由参数 id
-      if (id) {
-        this.isEditMode = true;
-        this.fetchInfo(id); // 加载信息详情
+    showCreateDialog() {
+      this.dialogTitle = '发布新信息';
+      this.form = {
+        id: null,
+        title: '',
+        category: '',
+        content: ''
+      };
+      this.dialogVisible = true;
+    },
+    showEditDialog(row) {
+      this.dialogTitle = '编辑信息';
+      this.form = { ...row };
+      this.dialogVisible = true;
+    },
+    submitForm() {
+      if (this.form.id) {
+        updateInfo(this.form)
+          .then(() => {
+            this.getUserInfoList();
+            this.dialogVisible = false;
+          })
+          .catch(error => {
+            console.error('更新信息失败:', error);
+          });
+      } else {
+        createInfo(this.form)
+          .then(() => {
+            this.getUserInfoList();
+            this.dialogVisible = false;
+          })
+          .catch(error => {
+            console.error('发布信息失败:', error);
+          });
       }
     },
-    methods: {
-      fetchInfo(id) {
-        // 根据 id 从后端获取信息详情
-        this.$http.get(`/api/info/${id}`).then(res => {
-          this.info = res.data;
+    deleteInfo(id) {
+      deleteInfo(id)
+        .then(() => {
+          this.getUserInfoList();
+        })
+        .catch(error => {
+          console.error('删除信息失败:', error);
         });
-      },
-      submitInfo() {
-  if (this.isEditMode) {
-    // 编辑模式
-    this.$http.put(`/api/info/${this.$route.params.id}`, this.info).then(() => {
-      this.$message.success('信息更新成功');
-      this.$router.push('/info/list');
-    });
-  } else {
-    // 发布模式
-    this.$http.post('/api/info', this.info).then(() => {
-      this.$message.success('信息发布成功');
-      this.$router.push('/info/list');
-    }).catch(err => {
-      console.error('发布失败:', err);
-      this.$message.error('发布信息失败，请重试！');
-    });
-  }
-}
-
     }
-  };
-  </script>
+  }
+};
+</script>
+
+<style scoped>
+/* 添加你的样式 */
+</style>
+
+
+
   
