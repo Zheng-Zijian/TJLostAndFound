@@ -5,6 +5,7 @@ from db import db
 from auth import auth_bp
 from items import items_bp
 from info import info_bp
+from request import claim_request_bp
 
 
 app = Flask(__name__)
@@ -25,6 +26,7 @@ app.config['MAIL_DEFAULT_SENDER'] = 'jikedao@yeah.net'  # 默认发件人地址
 app.register_blueprint(auth_bp)
 app.register_blueprint(items_bp)
 app.register_blueprint(info_bp)
+app.register_blueprint(claim_request_bp)
 # @app.route('/')
 # def get_image():
 #     image_path ='C:/Users/31535/Pictures/Screenshots/屏幕截图 2024-11-27 222424.png'  # 假设把图片放在了名为'static'的目录下，这里要根据实际放置情况调整

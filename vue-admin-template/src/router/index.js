@@ -93,16 +93,37 @@ export const constantRoutes = [
       }
     ]
   },
-
+  
+  // 新修改 lhy
+  // {
+  //   path: '/personal',
+  //   component: Layout,
+  //   children: [
+  //     {
+  //       path: 'personal',
+  //       name: '失物表',
+  //       component: () => import('@/views/personal/index'),
+  //       meta: { title: '个人页面', icon: 'table' }
+  //     }
+  //   ]
+  // },
+ //新增 lhy
   {
     path: '/personal',
     component: Layout,
+    meta: { title: '个人中心', icon: 'user' }, // 新增：外层添加icon
     children: [
       {
-        path: 'personal',
-        name: '失物表',
-        component: () => import('@/views/personal/index'),
-        meta: { title: 'Personal', icon: 'table' }
+        path: 'upload',
+        name: '上传失物列表',
+        component: () => import('@/views/personal/upload'),
+        meta: { title: '上传失物列表', icon: 'table' }
+      },
+      {
+        path: 'requests',
+        name: '认领请求列表',
+        component: () => import('@/views/personal/requests'),
+        meta: { title: '认领请求列表', icon: 'el-icon-bell' }
       }
     ]
   },

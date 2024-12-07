@@ -33,3 +33,12 @@ export function deleteItem(itemId){
     params: {itemId}
   })
 }
+
+
+export function apply_claim(itemId){
+  return request({
+    url: `/api/items/${itemId}/apply`,
+    method: 'post',
+    params: {itemId}
+  })
+}

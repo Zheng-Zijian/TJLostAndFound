@@ -67,6 +67,18 @@
           <span>{{ scope.row.claimed_user || '--' }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="请求认领" align="center">
+  <template slot-scope="scope">
+    <el-button 
+      type="primary" 
+      size="small" 
+      :disabled="scope.row.claimed" 
+      @click="handleApplyClaim(scope.row)"
+    >
+      请求认领
+    </el-button>
+  </template>
+</el-table-column>
 
     </el-table>
     <!-- 用户详细信息对话框 -->
@@ -86,12 +98,26 @@
         <el-button type="primary" @click="hideDescription">关 闭</el-button>
       </span>
     </el-dialog>
+
+    <el-dialog :visible.sync="claim_modalVisible" title="请求认领" @close="closeApplyModal(false)">
+      <p><strong>失物编号:</strong>{{ claim_itemid }}</p>
+      <p><strong>失物名称:</strong>{{ claim_itemname }}</p>
+      <p><strong>失物类别:</strong>{{ claim_itemcategory }}</p>
+      <p><strong>认领状态:</strong>{{ claim_itemstatus }}</p>
+      <p><strong>上传用户:</strong>{{ claim_item_upload_user }}</p>
+      <span slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="closeApplyModal(true)">确 认</el-button>
+        <el-button type="primary" @click="closeApplyModal(false)">取 消</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { getItems } from '@/api/table'
 import _ from 'lodash';
+import { apply_claim } from '@/api/table';
+import { Message } from 'element-ui';
 export default {
   filters: {
     statusFilter(status) {
@@ -115,7 +141,13 @@ export default {
       modalVisible: false,
       modalUser: '',
       modalContact: '',
-      sortOrder: 'asc' // 排序方式，默认为升序
+      sortOrder: 'asc', // 排序方式，默认为升序
+      claim_modalVisible: false,
+      claim_itemid: '',
+      claim_itemname: '',
+      claim_itemcategory: '',
+      claim_itemstatus: '',
+      claim_item_upload_user: ''
     };
   },
   methods: {
@@ -162,8 +194,45 @@ export default {
       // 切换排序方式
       this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
       this.fetchItems();
-    }
+    },
+    handleApplyClaim(item) {
+      // 检查是否已被认领
+      if (item.claimed) {
+        Message.warning('该物品已被认领');
+        return;
+      }
 
+      // 确认弹窗
+      this.$confirm(
+        `是否申请认领编号为 #${item.id} 的物品？`,
+        '确认请求',
+        {
+          confirmButtonText: '确认',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }
+      )
+        .then(() => {
+          // 发送申请请求
+          apply_claim(item.id)
+            .then((response) => {
+              console.log('申请成功:', response); // 调试信息
+              Message.success('申请认领成功');
+              this.fetchItems(); // 刷新数据
+            })
+            .catch((error) => {
+              console.error('申请失败:', error.response || error); // 调试信息
+              if (error.response && error.response.data && error.response.data.message) {
+                Message.error(error.response.data.message);
+              } else {
+                Message.error('申请失败，请稍后再试');
+              }
+            });
+        })
+        .catch(() => {
+          Message.info('已取消申请');
+        });
+    },
   },
   mounted() {
     this.fetchItems();

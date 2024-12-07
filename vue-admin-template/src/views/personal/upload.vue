@@ -287,6 +287,10 @@ export default {
         }
         addItem(data)
           .then(() => {
+            Message({
+              type:'success',
+              message: '上传成功'
+            })
             this.fetchItems()
               .catch(error => {
                 console.error('获取失物列表失败:', error)
