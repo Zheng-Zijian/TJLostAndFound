@@ -6,26 +6,28 @@ from models import InfoPost
 
 info_bp = Blueprint('info', __name__)
 
+# 获取当前用户发布的信息列表
+@info_bp.route('/api/info/user', methods=['GET'])
+@jwt_required()
+def get_user_info_list():
+    current_user = get_jwt_identity()
+    posts = InfoPost.query.filter_by(upload_user=current_user, is_active=True).order_by(InfoPost.created_at.desc()).all()
+    return jsonify([post.to_dict() for post in posts])
+
 # 获取信息列表
-@info_bp.route('/api/info', methods=['GET'])
+@info_bp.route('/api/info/all', methods=['GET'])
+@jwt_required()
 def get_info_list():
     search = request.args.get('search', '')
     category = request.args.get('category', '')
 
     query = InfoPost.query.filter_by(is_active=True)
     if search:
-        query = query.filter(InfoPost.title.contains(search))
+        query = query.filter(InfoPost.title.like(f'%{search}%'))
     if category:
-        query = query.filter_by(category=category)
-
+        query = query.filter(InfoPost.category==category)
     posts = query.order_by(InfoPost.created_at.desc()).all()
     return jsonify([post.to_dict() for post in posts])
-
-# 获取单条信息详情
-@info_bp.route('/api/info/<int:id>', methods=['GET'])
-def get_info_detail(id):
-    post = InfoPost.query.get_or_404(id)
-    return jsonify(post.to_dict())
 
 # 发布信息
 @info_bp.route('/api/info', methods=['POST'])
@@ -43,43 +45,42 @@ def create_info():
         title=data['title'],
         content=data['content'],
         category=data['category'],
-        upload_user=current_user['username']
+        upload_user=current_user
     )
     db.session.add(new_post)
     db.session.commit()
-    return jsonify({'message': '信息发布成功', 'id': new_post.id}), 201
+
+    return jsonify(new_post.to_dict()), 201
 
 # 编辑信息
 @info_bp.route('/api/info/<int:id>', methods=['PUT'])
 @jwt_required()
 def update_info(id):
     current_user = get_jwt_identity()
-    post = InfoPost.query.get_or_404(id)
-
-    if current_user['username'] != post.upload_user and current_user['role'] != 'admin':
-        return jsonify({'error': '权限不足'}), 403
-
     data = request.json
-    if 'title' in data:
-        post.title = data['title']
-    if 'content' in data:
-        post.content = data['content']
-    if 'category' in data:
-        post.category = data['category']
 
+    post = InfoPost.query.get_or_404(id)
+    if post.upload_user != current_user:
+        return jsonify({'error': '无权编辑此信息'}), 403
+
+    post.title = data.get('title', post.title)
+    post.content = data.get('content', post.content)
+    post.category = data.get('category', post.category)
     db.session.commit()
-    return jsonify({'message': '信息修改成功'})
+
+    return jsonify(post.to_dict())
 
 # 删除信息
 @info_bp.route('/api/info/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_info(id):
     current_user = get_jwt_identity()
+
     post = InfoPost.query.get_or_404(id)
+    if post.upload_user != current_user:
+        return jsonify({'error': '无权删除此信息'}), 403
 
-    if current_user['username'] != post.upload_user and current_user['role'] != 'admin':
-        return jsonify({'error': '权限不足'}), 403
-
-    post.is_active = False
+    db.session.delete(post)
     db.session.commit()
-    return jsonify({'message': '信息删除成功'})
+
+    return jsonify({'message': '信息已删除'})
