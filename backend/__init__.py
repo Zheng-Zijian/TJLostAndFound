@@ -7,7 +7,7 @@ from items import items_bp
 from info import info_bp
 from request import claim_request_bp
 from images import images_bp
-# from gevent.pywsgi import WSGIServer
+from gevent.pywsgi import WSGIServer
 app = Flask(__name__)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Jikedao_11@47.100.24.135/newdb'
@@ -31,8 +31,8 @@ app.register_blueprint(images_bp)
 
 
 if __name__ == '__main__':
-    # server = WSGIServer(('0.0.0.0', 5000), app)
-    # server.serve_forever()
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+    server = WSGIServer(('0.0.0.0', 5000), app)
+    server.serve_forever()
+    # with app.app_context():
+    #     db.create_all()
+    # app.run(debug=True)

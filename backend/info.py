@@ -1,3 +1,5 @@
+import json
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
@@ -10,7 +12,12 @@ info_bp = Blueprint('info', __name__)
 @info_bp.route('/api/info/user', methods=['GET'])
 @jwt_required()
 def get_user_info_list():
-    current_user = get_jwt_identity()
+    try:
+        # 将 get_jwt_identity() 返回的 JSON 字符串解析为字典
+        identity = json.loads(get_jwt_identity())
+        current_user = identity['username']  # 获取用户名
+    except  Exception as e:
+        return jsonify({'msg': 'Invalid JWT token format'}), 400
     posts = InfoPost.query.filter_by(upload_user=current_user, is_active=True).order_by(InfoPost.created_at.desc()).all()
     return jsonify([post.to_dict() for post in posts])
 
@@ -33,7 +40,12 @@ def get_info_list():
 @info_bp.route('/api/info', methods=['POST'])
 @jwt_required()
 def create_info():
-    current_user = get_jwt_identity()
+    try:
+        # 将 get_jwt_identity() 返回的 JSON 字符串解析为字典
+        identity = json.loads(get_jwt_identity())
+        current_user = identity['username']  # 获取用户名
+    except  Exception as e:
+        return jsonify({'msg': 'Invalid JWT token format'}), 400
     data = request.json
 
     required_fields = ['title', 'content', 'category']
@@ -56,7 +68,12 @@ def create_info():
 @info_bp.route('/api/info/<int:id>', methods=['PUT'])
 @jwt_required()
 def update_info(id):
-    current_user = get_jwt_identity()
+    try:
+        # 将 get_jwt_identity() 返回的 JSON 字符串解析为字典
+        identity = json.loads(get_jwt_identity())
+        current_user = identity['username']  # 获取用户名
+    except  Exception  as e:
+        return jsonify({'msg': 'Invalid JWT token format'}),400
     data = request.json
 
     post = InfoPost.query.get_or_404(id)
@@ -74,12 +91,15 @@ def update_info(id):
 @info_bp.route('/api/info/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_info(id):
-    current_user = get_jwt_identity()
-
+    try:
+        # 将 get_jwt_identity() 返回的 JSON 字符串解析为字典
+        identity = json.loads(get_jwt_identity())
+        current_user = identity['username']  # 获取用户名
+    except  Exception  as e:
+        return jsonify({'msg': 'Invalid JWT token format'}), 400
     post = InfoPost.query.get_or_404(id)
-    if post.upload_user != current_user:
+    if post.upload_user != current_user and identity['role'] != 'admin':
         return jsonify({'error': '无权删除此信息'}), 403
-
     db.session.delete(post)
     db.session.commit()
 
