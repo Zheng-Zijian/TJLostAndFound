@@ -13,7 +13,6 @@ const whiteList = ['/login', '/register'] // no redirect whitelist
 router.beforeEach(async(to, from, next) => {
   // start progress bar
   NProgress.start()
-
   // set page title
   document.title = getPageTitle(to.meta.title)
 
@@ -38,7 +37,7 @@ router.beforeEach(async(to, from, next) => {
           // dynamically add accessible routes
           router.options.routes = constantRoutes.concat(accessRoutes)
           router.addRoutes(accessRoutes)
-          next()
+          next({...to,replace:true})
         } catch (error) {
           // remove token and go to login page to re-login
           await store.dispatch('user/resetToken')

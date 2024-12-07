@@ -102,7 +102,7 @@ export const constantRoutes = [
         path: 'personal',
         name: '失物表',
         component: () => import('@/views/personal/index'),
-        meta: { title: 'Personal', icon: 'table' }
+        meta: { title: '个人页面', icon: 'table' }
       }
     ]
   },
@@ -191,14 +191,14 @@ export const constantRoutes = [
   // },
 
   // 404 page must be placed at the end !!!
-  { path: '*', redirect: '/404', hidden: true }
+  // { path: '*', redirect: '/404', hidden: true }
 ]
 
 export const asyncRoutes = [
   {
     path: '/info',
     component: Layout,
-    meta: { title: '信息管理', icon: 'el-icon-s-order' },
+    meta: { title: '信息管理', icon: 'el-icon-s-order' ,roles: ['admin'] },
     children: [
       {
         path: 'manage/:id?', // `:id?` 表示可选参数，用于编辑模式
@@ -211,6 +211,20 @@ export const asyncRoutes = [
         name: 'InfoList',
         component: () => import('@/views/info/InfoList'),
         meta: { title: '信息列表', roles: ['admin', 'user'] } // 所有人可访问
+      }
+    ]
+  },
+  {
+    path: '/admin',
+    component: Layout,
+    meta: { title: '管理员权限', icon: 'el-icon-s-order',roles: ['admin'] },
+    children: [
+      {
+        path: 'admin',
+        name: 'adminList',
+        // redirect: '/admin/admin',
+        component: () => import('@/views/admin/index'),
+        meta: { title: '管理员权限', roles: ['admin'] } // 所有人可访问
       }
     ]
   },

@@ -67,7 +67,7 @@
       </el-table-column>
       <el-table-column label="操作" align="center" width="210">
         <template slot-scope="scope">
-          <el-button type="primary" size="small" style="margin-right: 10px"
+          <el-button type="primary" size="small" :disabled="scope.row.claimed" style="margin-right: 10px"
             @click="ConfirmClaimStatus(scope.row.id, scope.row.item_name, scope.row.category, scope.row.claimed)">
             确认认领
           </el-button>
@@ -113,7 +113,7 @@
       <p style="display: flex; align-items: center; margin-bottom: 15px;">
         <strong style="margin-right: 10px; white-space: nowrap;">上传图片:</strong>
         <el-upload :action="image_base_api" list-type="picture-card" :auto-upload="false" :limit="1"
-          :class="{ 'hide': disable_upload }" :file-list="filelist" accept=".png, .jpg .jpeg"
+          :class="{ 'hide': disable_upload }" :file-list="filelist" accept=".png, .jpg, .jpeg"
           :on-change="handleImageChange" :on-remove="handleImageRemove">
           <i class="el-icon-plus"></i>
           <div slot="tip" class="el-upload__tip">只能上传jpg/png/jpeg文件</div>
@@ -172,6 +172,7 @@ import { claimItem } from '@/api/request'
 import _ from 'lodash'
 import { Message } from 'element-ui'
 import { uploadImages } from '@/api/images'
+import { mapGetters } from 'vuex'
 export default {
   filters: {
     statusFilter(status) {
@@ -181,9 +182,15 @@ export default {
       return ''
     }
   },
+  computed: {
+    ...mapGetters([
+      'name'
+    ])
+  },
   data() {
     return {
       results: [],
+      filelist: '',
       listLoading: true,
       items: [],
       category: '',
@@ -231,15 +238,7 @@ export default {
   },
   methods: {
     fetchUserInfo() {
-      const token = localStorage.getItem('access_token')
-      getInfo(token)
-        .then(response => {
-          this.userInfo = response.data
-          this.fetchItems()
-        })
-        .catch(error => {
-          console.error('获取用户信息失败:', error)
-        })
+      this.fetchItems()
     },
 
     fetchItems() {
@@ -249,7 +248,7 @@ export default {
         search: this.search.trim(),
         claimed: this.claimedStatus,
         sort: this.sortOrder,
-        upload_user: this.userInfo.name
+        upload_user: this.name
       }).then(response => {
         this.items = response.data
         this.listLoading = false
@@ -268,12 +267,13 @@ export default {
       this.search = ''
     },
     showDescription(description, id) {
-      this.tooltipVisible = true;
       this.image_url = process.env.VUE_APP_BASE_API + '/images/get/' + id;
+      this.tooltipVisible = true;
       this.tooltipContent = description || '无描述';
     },
     hideDescription() {
       this.tooltipVisible = false
+      this.image_url = '';
     },
     showContactInfo(user, contact) {
       this.modalUser = user
@@ -301,12 +301,13 @@ export default {
           category: this.upload_item_category,
           location: this.upload_item_location,
           found_date: this.upload_item_time,
-          upload_user: this.userInfo.name,
+          upload_user: this.name,
           description: this.upload_item_description
         }
         addItem(data)
           .then((response) => {
             const formDataObj = new FormData();
+            console.log(this.upload_item_time, 111111);
             formDataObj.append('image', this.upload_image);
             formDataObj.append('id', response.data.item.id);
             uploadImages(formDataObj).then(response => {
@@ -314,6 +315,13 @@ export default {
                 type: 'success',
                 message: '上传成功'
               })
+              this.upload_item_name = ""
+              this.upload_item_category = ""
+              this.upload_item_location = ""
+              this.upload_item_time = ""
+              this.upload_item_description = ""
+              this.filelist = []
+              this.disable_upload = false
             }).catch(error => {
               console.error('图片上传失败:', error)
             })

@@ -8,7 +8,7 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import get_jwt_identity
 import datetime
 import json
-
+from flask_mail import Mail, Message, current_app
 items_bp = Blueprint('items', __name__)
 
 @jwt_required()
@@ -40,7 +40,6 @@ def get_items():
         query = query.filter(models.LostItem.claimed == True)
     elif claimed == 'unclaimed':
         query = query.filter(models.LostItem.claimed == False)
-
     #    根据排序参数调整排序方式
     if sort_order == 'asc':
         query = query.order_by(models.LostItem.found_date.asc())
@@ -118,13 +117,15 @@ def delete_item(item_id):
         return jsonify({'message': 'Item not found'}), 404
 
     # 验证权限：确保当前用户是记录的上传者
-    if item.upload_user != user:
+    if item.upload_user != user and identity['role'] != 'admin':
         return jsonify({'message': 'Permission denied'}), 403
     # 删除记录
 
     #删除图片(新增)
     if item.image_path and os.path.exists(item.image_path):
         os.remove(item.image_path)
+    models.ClaimRequest.query.filter_by(lost_item_id = item_id).delete()
+    db.session.commit()
     db.session.delete(item)
     db.session.commit()
     return jsonify({'message': f'Item {item_id} deleted successfully'})
@@ -156,12 +157,12 @@ def add_user_item():
     if not user:
         return jsonify({'message': '用户名不存在'}), 400
     # 创建新的失物记录
-
     new_item = models.LostItem(
         upload_user=data['upload_user'],
         item_name=data['item_name'],
         category=data['category'],
         location=data['location'],
+        found_date=datetime.datetime.strptime(data['found_date'], '%Y-%m-%d'),
         description=data.get('description'),  # 可选字段
         contact_info=user.email
     )
@@ -173,3 +174,118 @@ def add_user_item():
         'msg': 'Item added successfully',
         'item': new_item.to_dict()
     }), 200
+
+
+@items_bp.route('/api/items/<int:item_id>/apply', methods=['POST'])
+@jwt_required()
+def apply_claim(item_id):
+    # 获取当前用户信息
+    identity = json.loads(get_jwt_identity())
+    claimant_username = identity['username']  # 从JWT中获取用户名
+
+    # 根据用户名查询数据库获取用户ID
+    claimant_user = models.User.query.filter_by(username=claimant_username).first()
+    if not claimant_user:
+        return jsonify({'message': 'Claimant user not found'}), 404  # 如果用户不存在，返回404错误
+
+    # 检查物品是否存在
+    item = models.LostItem.query.get(item_id)
+    if not item:
+        return jsonify({'message': 'Item not found'}), 404
+
+    # 检查物品是否已被认领
+    if item.claimed:
+        return jsonify({'message': 'Item already claimed'}), 400
+
+    # 检查是否重复认领
+    existing_request = models.ClaimRequest.query.filter_by(lost_item_id=item_id, claimant_user_id=claimant_user.id).first()
+    if existing_request:
+        return jsonify({'message': 'You have already applied for this item'}), 400
+
+    # 获取上传者的用户ID
+    uploader_user = models.User.query.filter_by(username=item.upload_user).first()
+    if not uploader_user:
+        return jsonify({'message': 'Uploader user not found'}), 404  # 如果上传者用户不存在，返回404错误
+
+    # 创建认领申请
+    claim_request = models.ClaimRequest(
+        lost_item_id=item_id,
+        claimant_user_id=claimant_user.id,
+        uploader_user_id=uploader_user.id,  # 使用查询到的上传者用户ID
+        status='pending'
+    )
+    db.session.add(claim_request)
+    db.session.commit()
+
+    try:
+        with current_app.app_context():
+            mail = Mail(current_app)
+            msg = Message(subject='失物认领申请',
+                          sender=mail.default_sender,
+                          recipients=[item.contact_info],  # 收件人地址列表
+                          body=f'【失物招领系统】您的上传的物品#{item.id}({item.item_name})正在被{claimant_user.username}({claimant_user.email})认领，请前往网站查看')
+            mail.send(msg)
+    except Exception as e:
+        return {'msg': '验证码发送失败'}, 400
+    return jsonify({'message': 'Claim request submitted successfully'}), 201
+
+
+
+#处理认领申请
+@items_bp.route('/api/items/<int:item_id>/claim/<int:claim_id>/action', methods=['POST'])
+@jwt_required()
+def handle_claim(item_id, claim_id):
+    # 获取当前用户
+    identity = json.loads(get_jwt_identity())
+    current_user_id = identity['username']  # 从JWT中获取用户名
+
+    # 根据用户名查询数据库获取用户ID
+    current_user = models.User.query.filter_by(username=current_user_id).first()
+    if not current_user:
+        return jsonify({'message': 'Current user not found'}), 404
+
+    # 获取认领请求
+    claim_request = models.ClaimRequest.query.get(claim_id)
+    if not claim_request:
+        return jsonify({'message': 'Claim request not found'}), 404
+
+    # 检查当前用户是否是上传者
+    if claim_request.uploader_user_id != current_user.id:
+        return jsonify({'message': 'Unauthorized to handle this claim'}), 403
+
+    # 获取操作类型
+    action = request.json.get('action')
+    if action not in ['approve', 'reject']:
+        return jsonify({'message': 'Invalid action'}), 400
+
+    # 检查是否已经有认领请求被批准
+    if action == 'approve':
+        # 检查是否已经有认领请求被批准
+        existing_approved_requests = models.ClaimRequest.query.filter(
+            models.ClaimRequest.lost_item_id == item_id,
+            models.ClaimRequest.status == 'approved'
+        ).first()
+        if existing_approved_requests:
+            return jsonify({'message': 'Another claim has already been approved for this item'}), 400
+
+        # 标记其他所有请求为rejected
+        other_requests = models.ClaimRequest.query.filter(
+            models.ClaimRequest.lost_item_id == item_id,
+            models.ClaimRequest.id != claim_id
+        ).all()
+        for req in other_requests:
+            req.status = 'rejected'
+            db.session.add(req)
+
+    # 处理认领请求
+    claim_request.status = 'approved' if action == 'approve' else 'rejected'
+    if action == 'approve':
+        claim_request.lost_item.claimed = True
+        claim_request.lost_item.claimed_user = claim_request.claimant.username  # 使用认领者的用户名
+#   elif action == 'reject' and claim_request.lost_item.claimed:
+#       claim_request.lost_item.claimed = False
+
+    # 提交更改
+    db.session.commit()
+
+    return jsonify({'message': 'Claim request updated successfully', 'status': claim_request.status}), 200
