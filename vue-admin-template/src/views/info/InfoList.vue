@@ -43,7 +43,6 @@ export default {
   methods: {
     handleSearch() {
       this.getInfoList();
-      this.search = '';
     },
 
     getInfoList() {
