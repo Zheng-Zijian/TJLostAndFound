@@ -12,8 +12,8 @@ from flask_mail import current_app,Message,Mail
 
 items_bp = Blueprint('items', __name__)
 
-@jwt_required()
 @items_bp.route('/api/items', methods=['GET'])
+@jwt_required()
 def get_items():
     category = request.args.get('category', '')  # 获取类别参数
     search = request.args.get('search', '')  # 获取搜索关键字
@@ -56,8 +56,8 @@ def get_items():
 
 
 # 认领失物
-@jwt_required()
 @items_bp.route('/api/items/claim', methods=['POST'])
+@jwt_required()
 def claim_item():
     data = request.get_json()
     id = data.get('item_id', None)
@@ -75,8 +75,8 @@ def claim_item():
 
 
 #每个用户上传的失物
-@jwt_required()
 @items_bp.route('/api/items/<string:username>', methods=['GET'])
+@jwt_required()
 def get_user_items(username):
     # 获取排序参数（asc 或 desc），默认按降序排列（距离现在最近的在前）
     sort_order = request.args.get('sort', 'desc')

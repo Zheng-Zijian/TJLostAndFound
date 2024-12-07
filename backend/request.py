@@ -63,7 +63,7 @@ def update_request_status(request_id):
     lostitem=LostItem.query.get(lost_item_id)
     if status=='approved':
         lostitem.claimed=True
-        lostitem.claimed_user=identity['username']
+        lostitem.claimed_user=claim_request.claimant.username
         db.session.commit()
         ClaimRequest.query.filter(ClaimRequest.lost_item_id==lost_item_id, ClaimRequest.id!=request_id).update({'status':'rejected'})
         db.session.commit()

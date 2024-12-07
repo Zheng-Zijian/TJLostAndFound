@@ -122,18 +122,6 @@
 
     </el-dialog>
 
-    <el-dialog :visible.sync="confirm_modalVisible" title="确认认领状态" @close="closeConfirmModal(false)">
-      <p><strong>失物编号:</strong>{{ claim_item_id }}</p>
-      <p><strong>失物名称:</strong>{{ claim_item_name }}</p>
-      <p><strong>失物类别:</strong>{{ claim_item_category }}</p>
-      <p><strong>认领状态:</strong>{{ claim_item_claimed }}</p>
-      <el-input v-model="nowclaimed_user" placeholder="认领用户..." class="input" />
-      <span slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="closeConfirmModal(true)">确 认</el-button>
-        <el-button type="primary" @click="closeConfirmModal(false)">取 消</el-button>
-      </span>
-    </el-dialog>
-
     <el-dialog :visible.sync="delete_modalVisible" title="是否删除失物信息?" @close="closeDeleteModal(false)">
       <p><strong>失物编号:</strong>{{ delete_item_id }}</p>
       <p><strong>失物名称:</strong>{{ delete_item_name }}</p>
@@ -160,10 +148,8 @@
 
 <script>
 import { getItems } from '@/api/table'
-import { getInfo } from '@/api/user'
 import { addItem } from '@/api/table'
 import { deleteItem } from '@/api/table'
-import { claimItem } from '@/api/request'
 
 import { Message } from 'element-ui'
 import { uploadImages } from '@/api/images'
@@ -208,12 +194,6 @@ export default {
       upload_item_description: '',
       upload_user_contact_info: '',
       upload_image: null,
-      claim_item_id: '',
-      claim_item_name: '',
-      claim_item_category: '',
-      claim_item_claimed: '',
-      claim_item_description: '',
-      nowclaimed_user: '',
       delete_item_id: '',
       delete_item_name: '',
       delete_item_category: '',
@@ -252,11 +232,6 @@ export default {
           console.error('获取失物列表失败:', error)
         })
     },
-    // createFilter(queryString) {
-    //   return (items) => {
-    //     return _.includes(items.item_name, queryString);
-    //   };
-    // }
     handleSearch() {
       this.fetchItems()
       this.search = ''
@@ -348,39 +323,6 @@ export default {
           .catch(error => {
             console.error('删除失物失败:', error)
           })
-      }
-    },
-    ConfirmClaimStatus(id, name, category, claimed) {
-      this.confirm_modalVisible = true
-      this.claim_item_id = id
-      this.claim_item_name = name
-      this.claim_item_category = category
-      this.claim_item_claimed = claimed ? '已认领' : '未认领'
-    },
-    closeConfirmModal(confirmed) {
-      this.confirm_modalVisible = false // 关闭弹框
-      if (confirmed) {
-        // 构建请求体数据
-        const data = {
-          item_id: this.claim_item_id,
-          claimed_user: this.nowclaimed_user // 确保传递 claimed_user
-        }
-
-        // 调用 claimItem 函数，传递 itemId 和 data
-        claimItem(this.claim_item_id, data).then(response => {
-          // 成功时的逻辑
-          Message({
-            type: 'success',
-            message: '认领成功'
-          })
-          this.fetchItems()
-          console.log('Item claimed successfully:', response)
-          // 你可以在这里更新 UI 或做其他处理，比如刷新失物列表
-        }).catch(error => {
-          // 错误时的处理
-          console.error('Failed to claim item:', error)
-          // 你可以在这里显示错误提示
-        })
       }
     },
     handleImageChange(file, fileList) {
