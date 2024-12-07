@@ -1,10 +1,11 @@
-from flask import Flask, send_file
+from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from db import db
 from auth import auth_bp
 from items import items_bp
 from info import info_bp
+from request import claim_request_bp
 from images import images_bp
 
 app = Flask(__name__)
@@ -25,6 +26,7 @@ app.config['MAIL_DEFAULT_SENDER'] = 'jikedao@yeah.net'  # 默认发件人地址
 app.register_blueprint(auth_bp)
 app.register_blueprint(items_bp)
 app.register_blueprint(info_bp)
+app.register_blueprint(claim_request_bp)
 app.register_blueprint(images_bp)
 
 

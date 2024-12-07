@@ -103,6 +103,13 @@ class ClaimRequest(db.Model):
             'status': self.status,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'uploader_username': self.uploader.username,
+            'uploader_email': self.uploader.email,
             'claimant_username': self.claimant.username,
-            'uploader_username': self.uploader.username
+            'claimant_email': self.claimant.email,
+            'item_name': self.lost_item.item_name,
+            'category': self.lost_item.category,
+            'found_date': self.lost_item.found_date.strftime('%Y-%m-%d'),
+            'location': self.lost_item.location,
+            'description': self.lost_item.description
         }
