@@ -8,7 +8,7 @@ from flask import request, jsonify, Blueprint
 from flask_mail import Mail, Message, current_app
 import datetime
 
-
+from sqlalchemy import or_
 
 from db import db
 import models
@@ -69,7 +69,7 @@ def verify():
     if user:
         return {'msg':'邮箱已注册'},400
     db.session.commit()
-    dbverifycode = models.VerifyCode.query.filter(models.VerifyCode.username==username and models.VerifyCode.email==email).first()
+    dbverifycode = models.VerifyCode.query.filter(models.VerifyCode.username==username,models.VerifyCode.email==email).first()
 
     if dbverifycode:
         if dbverifycode.email == email and dbverifycode.username == username:
@@ -113,14 +113,14 @@ def register():
         return {'msg': '两次密码不相同'}, 400
     if len(password) < 6:
         return {'msg': '验证码过短'}, 400
-    dbverifycode = models.VerifyCode.query.filter(models.VerifyCode.username ==username and models.VerifyCode.email == email).first()
+    dbverifycode = models.VerifyCode.query.filter(models.VerifyCode.username ==username,models.VerifyCode.email == email).first()
     if not dbverifycode:
         return {'msg':'验证码不存在或已过期'},400
     if dbverifycode.expiration_time < datetime.datetime.now():
         return {'msg':'验证码已过期，请重新发送'},400
     if verifycode != dbverifycode.verification_code:
         return {'msg':'验证码错误'},400
-    user = models.User.query.filter(models.User.username == username or models.User.email==email).first()
+    user = models.User.query.filter(or_(models.User.username == username,models.User.email==email)).first()
     if user:
         return {'msg':'用户已存在'},400
     try:
